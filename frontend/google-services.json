@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "584723630092",
+    "project_id": "msgly-chatting-app",
+    "storage_bucket": "msgly-chatting-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:584723630092:android:03ee627113e910864b8629",
+        "android_client_info": {
+          "package_name": "com.anonymous.Msgly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRDz1BWg2BAXuozjxw4ru_X7szWb1xksY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

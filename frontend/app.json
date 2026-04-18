@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Msgly",
+    "slug": "Msgly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/splashImage.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+
+    "newArchEnabled": true,
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.Msgly"
+    },
+
+    "android": {
+      "package": "com.anonymous.Msgly",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/splashImage.png"
+      }
+    },
+
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+
+    "extra": {
+      "eas": {
+        "projectId": "d6d40a42-588b-49bc-ba2b-582a1e86153a"
+      }
+    },
+
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splashImage.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/splashImage.png",
+          "color": "#ffffff",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ]
+    ]
+  }
+}
