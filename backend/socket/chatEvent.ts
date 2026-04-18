@@ -139,13 +139,15 @@ export function registerChatEvents(io: SocketIOServer, socket: Socket) {
 
       if (!populatedMessage) throw new Error("Message populate failed");
 
+      const populatedSender = populatedMessage.senderId as PopulatedUser | null;
+
       const finalMsg = {
         ...populatedMessage,
         id: populatedMessage._id,
         sender: {
-          id: populatedMessage.senderId?._id,
-          name: populatedMessage.senderId?.name,
-          avatar: populatedMessage.senderId?.avatar,
+          id: populatedSender?._id,
+          name: populatedSender?.name,
+          avatar: populatedSender?.avatar,
         },
       };
 

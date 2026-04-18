@@ -14,6 +14,8 @@
     "types": ["node"],
 
     // Output / debugging
+    "rootDir": ".",
+    "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -23,10 +25,6 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force"
-
-    // Optional build paths
-    // "rootDir": "./src",
-    // "outDir": "./dist"
   },
   "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"]
