@@ -1,3 +1,6 @@
-import { firebase } from "@react-native-firebase/app";
+import { getApp } from "@react-native-firebase/app";
 
-export default firebase;
+// Access the default native Firebase app registered by the RNFirebase plugin.
+const app = getApp();
+
+export default app;

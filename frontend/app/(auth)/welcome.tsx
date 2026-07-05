@@ -1,78 +1,104 @@
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { useRouter } from "expo-router";
+
 import Button from "@/components/Button";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
-import { colors, spacingX, spacingY } from "@/constants/theme";
+import { spacingX, spacingY, radius } from "@/constants/theme";
+import { useAppSettings } from "@/context/appSettingsContext";
+import { useTheme } from "@/context/themeContext";
 import { verticalScale } from "@/utils/styling";
-import { useRouter } from "expo-router";
-import {StyleSheet, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
 
+const Welcome = () => {
+  const router = useRouter();
+  const { colors } = useTheme(); // useTheme already provides isDark if needed
+  const { t } = useAppSettings();
 
+  return (
+    <ScreenWrapper showPattern={true} bgOpacity={0.6}>
+      <View style={styles.container}>
+        
+        {/* BRANDING */}
+        <Animated.View 
+          entering={FadeInDown.duration(600).springify()}
+          style={styles.brandContainer}
+        >
+          <Typo color={colors.primary} fontWeight="900" size={48}>
+            Msgly
+          </Typo>
+        </Animated.View>
 
+        {/* HERO IMAGE */}
+        <Animated.Image
+          entering={FadeIn.duration(1000).delay(200)}
+          source={require('../../assets/images/welcome.png')}
+          style={styles.welcomeImage}
+          resizeMode="contain"
+        />
 
-const Welcome=()=>{
-    const router=useRouter();
+        {/* WELCOME TEXT BLOCK */}
+        <Animated.View 
+          entering={FadeInDown.duration(800).delay(400).springify()}
+          style={styles.textContainer}
+        >
+          <Typo color={colors.text} size={34} fontWeight="800">
+            {t("stayConnected")}
+          </Typo>
+          <Typo color={colors.text} size={34} fontWeight="800">
+            {t("withCloseFriends")}
+          </Typo>
+          <Typo color={colors.primary} size={34} fontWeight="800">
+            {t("andFamily")}
+          </Typo>
+        </Animated.View>
 
-    return(
-        <ScreenWrapper showPattern={true} bgOpacity={0.5} >
-            <View style={styles.container}>
-                <View style={{alignItems:'center'}}>
-                    <Typo color={colors.white} fontWeight={'900'} size={43}>
-                        Msgly
+        {/* GET STARTED BUTTON */}
+        <Animated.View entering={FadeInDown.duration(800).delay(600).springify()}>
+          <Button 
+            style={[styles.startButton, { backgroundColor: colors.primary }]} 
+            onPress={() => router.push('/(auth)/login')}
+          >
+            <Typo size={20} fontWeight="bold" color={colors.white}>
+              {t("getStarted")}
+            </Typo>
+          </Button>
+        </Animated.View>
 
-                    </Typo>
-
-                </View>
-                <Animated.Image
-                entering={FadeIn.duration(700).springify()}
-                source={require('../../assets/images/welcome.png')}
-                style={styles.welcomeImage}
-                resizeMode={'contain'}
-                />
-
-                <View>
-                    <Typo color={colors.white} size={33} fontWeight={'800'}>
-                        Stay Connected
-                    </Typo>
-                    <Typo color={colors.white} size={33} fontWeight={'800'}>
-                        with your close friends
-                    </Typo>
-                    <Typo color={colors.white} size={33} fontWeight={'800'}>
-                        and family
-                    </Typo>
-                </View>
-
-                <Button 
-                style={{backgroundColor:colors.white}} 
-                onPress={()=>{
-                    // console.log("Get Started clicked");
-                    router.push('/(auth)/login')}}
-                >
-                    <Typo size={23} fontWeight={'bold'}>Get Started</Typo>
-                </Button>
-
-            </View>
-        </ScreenWrapper>
-    )
-}
+      </View>
+    </ScreenWrapper>
+  );
+};
 
 export default Welcome;
 
-const styles= StyleSheet.create({
-    container:{
-        flex:1,
-        justifyContent:'space-around',
-        paddingHorizontal:spacingX._20,
-        marginVertical:spacingY._40,
-    },
-    background:{
-        flex:1,
-        backgroundColor:colors.neutral900,
-
-    },
-    welcomeImage:{
-        height:verticalScale(300),
-        aspectRatio:1,
-        alignSelf:'center',
-    },
-})
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-around',
+    paddingHorizontal: spacingX._25,
+    paddingVertical: spacingY._40,
+  },
+  brandContainer: {
+    alignItems: 'center',
+    marginTop: spacingY._10,
+  },
+  welcomeImage: {
+    height: verticalScale(300),
+    width: '100%',
+    alignSelf: 'center',
+  },
+  textContainer: {
+    gap: 2, // Keeps the multi-line title tight
+  },
+  startButton: {
+    height: verticalScale(56),
+    borderRadius: radius._15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+});

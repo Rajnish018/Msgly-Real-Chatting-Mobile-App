@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Msgly — Production Release</title>
+  <style>
+    :root {
+      --bg: #090a0f;
+      --panel: #131520;
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      --accent-glow: rgba(59, 130, 246, 0.3);
+      --success: #10b981;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      color: var(--text-main);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Header & Hero Section */
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 40px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent-gradient);
+    }
+
+    .hero-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .hero-content {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+      }
+      .screenshot {
+        align-self: center;
+        max-width: 200px !important;
+      }
+    }
+
+    .badge-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge.version {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.025em;
+      background: linear-gradient(to right, #fff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin: 0 0 24px 0;
+      max-width: 600px;
+    }
+
+    /* Action Buttons & Paths */
+    .cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      padding: 14px 28px;
+      background: var(--accent-gradient);
+      color: #fff;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+    }
+
+    .path-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--panel-border);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .path-box code {
+      color: #e2e8f0;
+    }
+
+    .screenshot {
+      max-width: 180px;
+      border-radius: 16px;
+      border: 4px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      transform: rotate(2deg);
+      transition: transform 0.3s;
+    }
+
+    .screenshot:hover {
+      transform: rotate(0deg) scale(1.05);
+    }
+
+    /* Grid Layout for Content */
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Feature List Styling */
+    .features-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .feature-item {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .feature-item strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .feature-item p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Steps & Notes Styling */
+    ol, .notes-list {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    ol li, .notes-list li {
+      margin-bottom: 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    ol li::marker {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .notes-list {
+      list-style-type: square;
+    }
+
+    .notes-list li::marker {
+      color: rgba(168, 85, 247, 0.5);
+    }
+
+    .philosophy-text {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      border-top: 1px solid var(--panel-border);
+      padding-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <header>
+      <div class="hero-content">
+        <div>
+          <div class="badge-container">
+            <span class="badge">Msgly</span>
+            <span class="badge version">v1.0.0-release</span>
+          </div>
+          <h1>Secure Real-time Chat</h1>
+          <p class="tagline">A premium, privacy-first messaging alternative featuring end-to-end encryption, biometric locks, dynamic media streaming, and real-time synchronization.</p>
+          
+          <div class="cta-group">
+            <a class="btn-primary" href="./app-release.apk" download>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Download APK
+            </a>
+            <div class="path-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <code>.../outputs/apk/release/app-release.apk</code>
+            </div>
+          </div>
+        </div>
+        <img class="screenshot" src="./screenshot.png" alt="Msgly Interface Preview"/>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="left-column">
+        <div class="card">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            Core Architecture & Features
+          </h2>
+          <ul class="features-list">
+            <li class="feature-item">
+              <strong>End-to-End Encryption</strong>
+              <p>Zero-knowledge protocol architecture ensuring complete privacy for peer-to-peer messaging.</p>
+            </li>
+            <li class="feature-item">
+              <strong>Real-Time Pipeline</strong>
+              <p>Ultra-low latency delivery state engine built on top of robust WebSocket/Socket.io backend layers.</p>
+            </li>
+            <li class="feature-item">
+              <strong>Hardware Guard Vault</strong>
+              <p>Biometric fingerprint parsing and cryptographic PIN isolation native to the device secure storage engine.</p>
+            </li>
+            <li class="feature-item">
+              <strong>Rich Dynamic Media</strong>
+              <p>Asynchronous multi-thread handling for voice fragments, documents, image compression, and local cache previews.</p>
+            </li>
+            <li class="feature-item">
+              <strong>FCM Notification Matrix</strong>
+              <p>Background persistent socket notifications via Firebase cloud infrastructure framework pipelines.</p>
+            </li>
+            <li class="feature-item">
+              <strong>Moderation Engine</strong>
+              <p>Client-side encryption preservation for immediate metadata reporting and localized blocking logic.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="card">
+          <h2>Installation Guide</h2>
+          <ol>
+            <li>Tap the <strong>Download APK</strong> header module button layout above.</li>
+            <li>Launch the installation package environment on your target Android platform.</li>
+            <li>Provide authorization overrides for third-party unknown binary sources if requested by native safety systems.</li>
+            <li>Initiate production cluster configuration via localized authorization or key generation.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>Tester Playground Notes</h2>
+          <ul class="notes-list">
+            <li>Ensure active configurations mirror standard configurations nested within the matching <code>/backend</code> directory.</li>
+            <li>Push modules require verified <code>google-services.json</code> asset synchronization hooks.</li>
+            <li>Utilize the specialized cryptographic suite tab within application debug profiles to trace key parameters during E2EE processing.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Product Philosophy</h2>
+          <p class="philosophy-text">
+            Msgly rejects bloated analytics. Our codebase emphasizes ultra-lean resource overhead, modern structural state management routines, and absolute minimization of user tracking surfaces.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Built on: 2026-07-04 — Orchestrated with care by your Automated Build Companion
+    </footer>
+  </div>
+</body>
+</html>

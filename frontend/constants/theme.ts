@@ -1,6 +1,6 @@
 import { scale, verticalScale } from "@/utils/styling";
 
-export const colors = {
+export const lightColors = {
   primary: "#facc15",
   primaryLight: "#fef08a",
   primaryDark: "#eab308",
@@ -9,7 +9,7 @@ export const colors = {
   black: "#000",
   rose: "#ef4444",
   otherBubble: "#FFF1BF",
-  myBubble: "#FFE1CC",
+  myBubble: "#fff68f",
   green: "#16a34a",
   neutral50: "#fafaf9",
   neutral100: "#f5f5f4",
@@ -23,6 +23,32 @@ export const colors = {
   neutral800: "#292524",
   neutral900: "#1c1917",
 };
+
+export const darkColors = {
+  primary: "#facc15",
+  primaryLight: "#fef08a",
+  primaryDark: "#eab308",
+  text: "#f5f5f5",
+  white: "#121212",
+  black: "#ffffff",
+  rose: "#fb7185",
+  otherBubble: "#272727",
+  myBubble: "#6e550a",
+  green: "#22c55e",
+  neutral50: "#121212",
+  neutral100: "#1b1b1b",
+  neutral200: "#272727",
+  neutral300: "#323232",
+  neutral350: "#3d3d3d",
+  neutral400: "#8a8a8a",
+  neutral500: "#b3b3b3",
+  neutral600: "#d0d0d0",
+  neutral700: "#e0e0e0",
+  neutral800: "#f0f0f0",
+  neutral900: "#ffffff",
+};
+
+export const colors = lightColors;
 
 export const spacingX = {
   _3: scale(3),

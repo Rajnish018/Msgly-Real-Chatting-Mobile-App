@@ -11,6 +11,11 @@ backend/node_modules/
 backend/.env
 frontend/.env
 
+# CRITICAL: Firebase Service Account Keys (MUST NEVER COMMIT)
+*-adminsdk-*.json
+firebase-adminsdk-*.json
+msgly-chatting-app-firebase-adminsdk-*.json
+
 # Logs
 *.log
 npm-debug.log*
@@ -23,6 +28,10 @@ dist/
 build/
 coverage/
 .next/
+*.apk
+*.aab
+*.jks
+*.keystore
 
 # Expo / React Native
 frontend/.expo/
@@ -31,6 +40,7 @@ frontend/web-build/
 frontend/expo-env.d.ts
 frontend/android/
 frontend/ios/
+frontend/android/app/release.keystore
 
 # TypeScript
 *.tsbuildinfo

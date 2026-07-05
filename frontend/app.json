@@ -4,44 +4,52 @@
     "slug": "Msgly",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/splashImage.png",
+    "icon": "./assets/android/play_store_512.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Msgly"
-    },
-
-    "android": {
-      "package": "com.anonymous.Msgly",
-      "googleServicesFile": "./google-services.json",
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/splashImage.png"
+      "bundleIdentifier": "com.anonymous.Msgly",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Msgly uses FaceID to securely unlock your messages and protect your privacy."
       }
     },
-
+    "android": {
+      "package": "com.anonymous.Msgly",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android/play_store_512.png"
+      }
+    },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/web/favicon.ico"
     },
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-
     "extra": {
       "eas": {
         "projectId": "d6d40a42-588b-49bc-ba2b-582a1e86153a"
       }
     },
-
     "plugins": [
       "expo-router",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Msgly to use FaceID for secure access."
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -54,17 +62,12 @@
           }
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/splashImage.png",
-          "color": "#ffffff",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ]
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      "expo-secure-store",
+      "expo-mail-composer",
+      "expo-audio",
+      "expo-video"
     ]
   }
 }

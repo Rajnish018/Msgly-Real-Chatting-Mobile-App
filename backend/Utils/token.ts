@@ -1,13 +1,25 @@
 import type { UserProps } from "../types.js";
 import jwt from "jsonwebtoken";
 
-export const generateToken = (user: UserProps) => {
+export const generateToken = (user: any) => {
+  const userId = user.id || user._id?.toString();
   const payload = {
     user: {
-      id: user.id,
+      id: userId,
       name: user.name,
       email: user.email,
       avatar: user.avatar,
+      bio: user.bio,
+      privateProfile: user.privateProfile,
+      showOnlineStatus: user.showOnlineStatus,
+      notificationsEnabled: user.notificationsEnabled,
+      tokenVersion: user.tokenVersion ?? 0,
+      accountStatus: user.accountStatus ?? "active",
+      deactivatedAt: user.deactivatedAt ?? null,
+      scheduledDeletionAt: user.scheduledDeletionAt ?? null,
+      publicEncryptionKey: user.publicEncryptionKey ?? null,
+      settings: user.settings ?? null,
+      blockedUsers: user.settings?.privacy?.blockedUserIds ?? [],
     },
   };
 

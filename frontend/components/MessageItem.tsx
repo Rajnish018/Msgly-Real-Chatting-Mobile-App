@@ -1,19 +1,41 @@
-import { View, StyleSheet} from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
+import * as Icons from "phosphor-react-native";
 import { MessageProps } from "@/types";
 import { useAuth } from "@/context/authContext";
-import { colors, radius, spacingX, spacingY } from "@/constants/theme";
+import { radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 import Avatar from "./Avatar";
 import Typo from "./Typo";
 import moment from "moment";
 import { Image } from "expo-image";
+import { useTheme } from "@/context/themeContext";
+import { useAppSettings } from "@/context/appSettingsContext";
+import { createDefaultUserSettings } from "@/constants/userSettings";
 
-const MessageItem = ({ item, isDirect }: { item: MessageProps; isDirect: boolean }) => {
-
+const MessageItem = ({
+  item,
+  isDirect,
+  onLongPress,
+  onReply,
+}: {
+  item: MessageProps;
+  isDirect: boolean;
+  onLongPress?: (item: MessageProps) => void;
+  onReply?: (item: MessageProps) => void;
+}) => {
   const { user: currentUser } = useAuth();
+  const { colors } = useTheme(); // Use the dynamic theme colors
+  const { t, settings } = useAppSettings();
+  const chatSettings = settings?.chats || createDefaultUserSettings().chats;
+  const messageFontSize =
+    chatSettings.fontSize === "small"
+      ? 14
+      : chatSettings.fontSize === "large"
+        ? 17
+        : 15;
 
-  const sender: any = item?.sender 
+  const sender: any = item?.sender;
   const isMe = String(currentUser?.id) === String(sender?._id || sender?.id);
 
   const formattedDate = item?.createdAt
@@ -22,8 +44,38 @@ const MessageItem = ({ item, isDirect }: { item: MessageProps; isDirect: boolean
       : moment(item.createdAt).format("MMM D")
     : "";
 
+  const deliveredTo = item.deliveredTo || [];
+  const seenBy = item.seenBy || [];
+  const isSeen = seenBy.some((id) => String(id) !== String(currentUser?.id));
+  const isDelivered = deliveredTo.some((id) => String(id) !== String(currentUser?.id));
+  const isPending = item.syncStatus === "pending";
+  const isSending = item.syncStatus === "sending";
+  const isFailed = item.syncStatus === "failed";
+  const showReplyPreview = Boolean(item?.replyTo && !item?.isDeleted && !item.replyTo?.isDeleted);
+  const receiptColor = isFailed
+    ? colors.rose
+    : isPending || isSending
+      ? colors.neutral500
+      : isSeen
+        ? "#EAB308"
+        : isDelivered
+          ? colors.neutral700
+          : colors.neutral400;
+  const ReceiptIcon = isFailed
+    ? Icons.WarningCircle
+    : isSending
+      ? Icons.CircleNotch
+      : isPending
+        ? Icons.ClockCountdown
+        : isSeen || isDelivered
+          ? Icons.Checks
+          : Icons.Check;
+
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onLongPress={() => onLongPress?.(item)}
+      onPress={() => onReply?.(item)}
       style={[
         styles.messageContainer,
         isMe ? styles.myMessage : styles.theirMessage,
@@ -42,18 +94,29 @@ const MessageItem = ({ item, isDirect }: { item: MessageProps; isDirect: boolean
       <View
         style={[
           styles.messageBubble,
-          isMe ? styles.myBubble : styles.theirBubble,
+          { backgroundColor: isMe ? colors.myBubble : colors.otherBubble },
         ]}
       >
         {/* sender name (only in group messages + not me) */}
         {!isMe && !isDirect && (
-          <Typo size={13} color={colors.neutral500} fontWeight="600">
+          <Typo size={12} color={colors.neutral600} fontWeight="600">
             {sender?.name || "User"}
           </Typo>
         )}
 
+        {showReplyPreview && (
+          <View style={[styles.replyPreview, { borderLeftColor: colors.primary, backgroundColor: colors.neutral100 }]}>
+            <Typo size={11} fontWeight="700" color={colors.neutral700}>
+              {item.replyTo?.sender?.name || t("reply")}
+            </Typo>
+            <Typo size={12} color={colors.neutral600} textProps={{ numberOfLines: 1 }}>
+              {item.replyTo?.content || (item.replyTo?.attachment ? "📷 Image" : "")}
+            </Typo>
+          </View>
+        )}
+
         {/* attachment preview */}
-        {item?.attachment && (
+        {!!item?.attachment && !item?.isDeleted && (
           <Image
             source={{ uri: item.attachment }}
             contentFit="cover"
@@ -63,20 +126,53 @@ const MessageItem = ({ item, isDirect }: { item: MessageProps; isDirect: boolean
         )}
 
         {/* message text */}
-        {!!item?.content && (
-          <Typo size={14} color={colors.black}>
-            {item.content}
+        {!!item?.content && !item?.isDeleted && (
+          <View style={styles.messageTextRow}>
+            {item.encrypted && (
+              <Icons.LockKey
+                size={12}
+                color={item.decryptionFailed ? colors.rose : colors.neutral500}
+                weight="fill"
+              />
+            )}
+            <Typo
+              size={messageFontSize}
+              color={item.decryptionFailed ? colors.neutral500 : colors.text}
+              style={item.decryptionFailed ? styles.deletedText : undefined}
+            >
+              {item.content}
+            </Typo>
+          </View>
+        )}
+
+        {!!item?.isDeleted && (
+          <Typo size={14} color={colors.neutral500} style={styles.deletedText}>
+            {t("messageDeleted")}
           </Typo>
         )}
 
-        {/* time */}
+        {/* time + status */}
         {!!item?.createdAt && (
-          <Typo size={11} color={colors.neutral500} style={{ alignSelf: "flex-end" }}>
-            {formattedDate}
-          </Typo>
+          <View style={styles.statusRow}>
+            <Typo 
+              size={10} 
+              color={colors.neutral500} 
+              style={{ opacity: 0.8 }}
+            >
+              {formattedDate}{item?.editedAt && !item?.isDeleted ? ` • ${t("edited")}` : ""}
+            </Typo>
+
+            {isMe && (
+              <ReceiptIcon
+                size={14}
+                color={receiptColor}
+                weight={isFailed || isSeen ? "fill" : "bold"}
+              />
+            )}
+          </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -86,7 +182,7 @@ const styles = StyleSheet.create({
   messageContainer: {
     flexDirection: "row",
     gap: spacingX._7,
-    maxWidth: "80%",
+    maxWidth: "85%", // Increased slightly for better text fit
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -96,21 +192,41 @@ const styles = StyleSheet.create({
   },
   messageAvatar: {
     alignSelf: "flex-end",
+    marginBottom: 2,
   },
   attachment: {
-    height: verticalScale(180),
-    width: verticalScale(180),
-    borderRadius: radius._10,
+    height: verticalScale(200),
+    width: verticalScale(200),
+    borderRadius: radius._12,
+    marginVertical: spacingY._5,
   },
   messageBubble: {
-    padding: spacingX._10,
+    paddingHorizontal: spacingX._12,
+    paddingVertical: spacingY._7,
     borderRadius: radius._15,
-    gap: spacingY._5,
+    // Add logic for message tail-like appearance if desired
+    borderBottomRightRadius: radius._3, // Optional: sharper corner for 'me'
   },
-  myBubble: {
-    backgroundColor: colors.myBubble,
+  replyPreview: {
+    borderLeftWidth: 3,
+    paddingLeft: spacingX._10,
+    paddingVertical: spacingY._5,
+    marginBottom: spacingY._5,
+    borderRadius: radius._10,
   },
-  theirBubble: {
-    backgroundColor: colors.otherBubble,
+  deletedText: {
+    fontStyle: "italic",
+  },
+  messageTextRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacingX._5,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: spacingX._5,
+    marginTop: 2,
   },
 });

@@ -1,11 +1,12 @@
 import { View, Text, ActivityIndicatorProps, ActivityIndicator } from 'react-native'
 import React from 'react'
-import { colors } from '@/constants/theme'
+import { useTheme } from '@/context/themeContext'
 
 const  Loading=({
     size='large',
-    color=colors.primaryDark
+    color
 }:ActivityIndicatorProps) =>{
+  const { colors } = useTheme();
   return (
     <View style={
         {
@@ -14,7 +15,7 @@ const  Loading=({
             alignItems:'center'
         }
     }>
-      <ActivityIndicator size={size} color={color}/>
+      <ActivityIndicator size={size} color={color || colors.primaryDark}/>
     </View>
   )
 }

@@ -43,6 +43,19 @@ const ConversationSchema = new Schema<ConversationProps>({
     type: Date,
     default: Date.now,
   },
+  clearedBy: [
+    {
+      userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      clearedAt: {
+        type: Date,
+        required: true,
+      },
+    },
+  ],
 });
 
 ConversationSchema.pre("save", function () {

@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View,StyleSheet } from 'react-native'
 import React from 'react'
 import { AvatarProps } from '@/types';
 import { verticalScale } from '@/utils/styling';
-import { colors, radius } from '@/constants/theme';
+import { radius } from '@/constants/theme';
 import {Image} from 'expo-image'
 import { getAvatarPath } from '@/services/imageService';
+import { useTheme } from '@/context/themeContext';
 
 const Avatar=({uri,size=26,style,isGroup=false}:AvatarProps)=>{
+  const { colors } = useTheme();
   return (
-    <View style={[styles.avatar,{height:verticalScale(size),width:verticalScale(size)} ,style]}> 
+    <View style={[styles.avatar,{height:verticalScale(size),width:verticalScale(size), backgroundColor: colors.neutral200, borderColor: colors.neutral100} ,style]}> 
       <Image
       style={{flex:1}}
       source={getAvatarPath(uri,isGroup)}
@@ -24,12 +26,10 @@ export default Avatar;
 const styles=StyleSheet.create({
     avatar:{
         alignSelf:"center",
-        backgroundColor:colors.neutral200,
         height:verticalScale(47),
         width:verticalScale(47),
         borderRadius:radius.full,
         borderWidth:1,
-        borderColor:colors.neutral100,
         overflow:"hidden"
 
     }

@@ -6,120 +6,150 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
-import * as Icons from 'phosphor-react-native'
-
-import ScreenWrapper from "@/components/ScreenWrapper";
-import { colors, radius, spacingX, spacingY } from "@/constants/theme";
-import Typo from "@/components/Typo";
-import BackButton from "@/components/BackButton";
-import Input from "@/components/Input";
-import { verticalScale } from "@/utils/styling";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as Icons from "phosphor-react-native";
+
+import Typo from "@/components/Typo";
+import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { radius, spacingX, spacingY } from "@/constants/theme";
+import { useAppSettings } from "@/context/appSettingsContext";
+import { useTheme } from "@/context/themeContext";
 import { useAuth } from "@/context/authContext";
+import { scale, verticalScale } from "@/utils/styling";
 
 const Register = () => {
-  const nameRef=useRef('')
-  const emailRef=useRef('')
-  const passwordRef=useRef('')
-  const [isLoading,setIsLoading]=useState(false)
-  const router=useRouter()
+  const router = useRouter();
+  const { signUp } = useAuth();
+  const { colors } = useTheme();
+  const { t } = useAppSettings();
 
-  const {signUp}=useAuth();
+  const nameRef = useRef<string>("");
+  const emailRef = useRef<string>("");
+  const passwordRef = useRef<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit=async()=>{
-    if(!emailRef.current||!passwordRef.current|| !nameRef.current){
-      Alert.alert("Sign Up","Please fill all the fields")
+  const handleRegister = async () => {
+    const name = nameRef.current.trim();
+    const email = emailRef.current.trim();
+    const password = passwordRef.current.trim();
+
+    if (!name || !email || !password) {
+      Alert.alert(t("signUp"), t("fillAllFields"));
       return;
     }
-    // api request 
-    try{
 
-      setIsLoading(true)
-      await signUp(emailRef.current,passwordRef.current,nameRef.current,"")
-
-    }catch(error:any){
-      Alert.alert("Registration error ",error.message)
-    }finally{
-      setIsLoading(false)
+    try {
+      setIsLoading(true);
+      await signUp(email, password, name);
+    } catch (error: any) {
+      Alert.alert(t("signUpError"), error.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
     }
-
-  }
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScreenWrapper showPattern={true}>
-        <View style={styles.container}>
-          {/* HEADER */}
-          <View style={styles.header}>
-            <BackButton iconSize={28} />
-            <Typo size={17} color={colors.white}>
-              Need Some Help?
-            </Typo>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.white }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+
+          {/* 1. CENTERED HEADER BLOCK */}
+          <View style={styles.headerSection}>
+            {/* 1st: Icon */}
+            <View style={[styles.iconBox, { backgroundColor: colors.primary + '15' }]}>
+               <Icons.UserPlus size={scale(32)} color={colors.primary} weight="duotone" />
+            </View>
+            
+            {/* 2nd & 3rd: Title then Subtitle */}
+            <View style={styles.tightGapCentered}>
+              <Typo size={28} fontWeight="800" color={colors.neutral900} style={{ textAlign: 'center' }}>
+                {t("joinUs")}
+              </Typo>
+              <Typo size={15} color={colors.neutral500} style={styles.descriptionCentered}>
+                {t("startYourJourney")}
+              </Typo>
+            </View>
           </View>
 
-          {/* WHITE CONTENT AREA */}
-          <View style={styles.content}>
-            <ScrollView
-              contentContainerStyle={styles.form}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={{ gap: spacingY._10, marginBottom: spacingY._15 }}>
-                <Typo size={28} fontWeight={"600"}>
-                  Getting Started
-                </Typo>
+          {/* 2. FORM BLOCK */}
+          <View style={styles.form}>
+            
+            {/* Name Group */}
+            <View style={styles.tightGap}>
+              <Typo size={14} fontWeight="600" color={colors.neutral700} style={styles.label}>
+                {t("fullName") || "Full Name"}
+              </Typo>
+              <Input
+                placeholder={t("enterName")}
+                onChangeText={(value: string) => (nameRef.current = value)}
+                icon={<Icons.User size={verticalScale(20)} color={colors.neutral400} />}
+              />
+            </View>
 
-                <Typo color={colors.neutral900}>
-                  Create an account to continue
-                </Typo>
-              </View>
+            {/* Email Group */}
+            <View style={styles.tightGap}>
+              <Typo size={14} fontWeight="600" color={colors.neutral700} style={styles.label}>
+                {t("emailAddress") || "Email Address"}
+              </Typo>
+              <Input
+                placeholder={t("enterEmail")}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                onChangeText={(value: string) => (emailRef.current = value)}
+                icon={<Icons.At size={verticalScale(20)} color={colors.neutral400} />}
+              />
+            </View>
 
-              <Input 
-              placeholder="Enter your name"
-              onChangeText={(value:string)=>nameRef.current=value}
-              icon={<Icons.UserIcon size={verticalScale(26)} color={colors.neutral600}/>}/>
-              <Input 
-              placeholder="Enter your email"
-              onChangeText={(value:string)=>emailRef.current=value}
-              icon={<Icons.AtIcon size={verticalScale(26)} color={colors.neutral600}/>}/>
-              <Input 
-              placeholder="Enter your password"
-              secureTextEntry
-              onChangeText={(value:string)=>passwordRef.current=value}
-              icon={<Icons.LockIcon size={verticalScale(26)} color={colors.neutral600}/>}/>
+            {/* Password Group */}
+            <View style={styles.tightGap}>
+              <Typo size={14} fontWeight="600" color={colors.neutral700} style={styles.label}>
+                {t("password") || "Password"}
+              </Typo>
+              <Input
+                placeholder={t("enterPassword")}
+                secureTextEntry
+                onChangeText={(value: string) => (passwordRef.current = value)}
+                icon={<Icons.Lock size={verticalScale(20)} color={colors.neutral400} />}
+              />
+            </View>
 
-              <View style={{marginTop:spacingY._25, gap:spacingY._15}}>
-                <Button loading={isLoading} onPress={handleSubmit}>
-                  <Typo fontWeight={'bold'} color={colors.black} size={20}>
-                    Sign Up
+            {/* Action Group */}
+            <View style={{ marginTop: spacingY._10 }}>
+              <Button loading={isLoading} onPress={handleRegister} style={styles.registerButton}>
+                <View style={styles.buttonContent}>
+                  <Typo fontWeight="700" color={colors.white} size={16}>
+                    {t("signUp")}
                   </Typo>
-
-                </Button>
-
-
-                <View style={styles.footer}>
-                  <Typo >
-                    Already have account ?
-                  </Typo>
-                  
-                    <Pressable onPress={()=>router.push('/(auth)/login')}>
-                      <Typo fontWeight={'bold'} color={colors.primaryDark}>
-                        Login
-                      </Typo>
-                    </Pressable>
+                  <Icons.ArrowRight size={scale(18)} color={colors.white} weight="bold" />
                 </View>
-              </View>
-            </ScrollView>
+              </Button>
+            </View>
           </View>
-        </View>
-      </ScreenWrapper>
-    </KeyboardAvoidingView>
+
+          {/* 3. FOOTER BLOCK */}
+          <View style={styles.footer}>
+            <Typo size={15} color={colors.neutral500}>{t("alreadyHaveAccount")}</Typo>
+            <Pressable onPress={() => router.push("/(auth)/login")}>
+              <Typo fontWeight="700" size={15} color={colors.primary}>
+                {" "}{t("login")}
+              </Typo>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -128,38 +158,68 @@ export default Register;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between",
   },
-
-  header: {
-    paddingHorizontal: spacingX._20,
-    paddingTop: spacingY._15,
-    paddingBottom: spacingY._25,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  backButtonWrapper: {
+    position: 'absolute',
+    top: spacingY._20,
+    left: spacingX._20,
+    zIndex: 10,
   },
-
-  content: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radius._50,
-    borderTopRightRadius: radius._50,
-    borderCurve: "continuous",
-    paddingHorizontal: spacingX._20,
-    paddingTop: spacingY._20,
-    overflow: "hidden", // ✅ keeps rounded corners clean
+  backButton: {
+    padding: scale(8),
+    borderRadius: radius._12,
   },
-
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacingX._25,
+    paddingVertical: spacingY._30,
+  },
+  /* CONTENT BLOCK SPACING & ALIGNMENT */
+  headerSection: {
+    marginBottom: spacingY._40,
+    alignItems: 'center',
+  },
+  iconBox: {
+    width: scale(64),
+    height: scale(64),
+    borderRadius: radius._15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacingY._20,
+  },
+  tightGapCentered: {
+    gap: spacingY._10,
+    alignItems: 'center',
+  },
+  descriptionCentered: {
+    textAlign: 'center',
+    lineHeight: verticalScale(20),
+  },
   form: {
-    gap: spacingY._15,
-    paddingBottom: spacingY._20, // ✅ prevents bottom cut
+    gap: spacingY._25,
   },
-  footer:{
-    flexDirection:'row',
-    justifyContent:'center',
-    alignItems:'center',
-    gap: spacingX._5,
-    marginTop: spacingY._10
-  }
+  /* AUTO-TIGHTENING LOGIC */
+  tightGap: {
+    gap: spacingY._7,
+  },
+  label: {
+    marginLeft: spacingX._5,
+  },
+  registerButton: {
+    height: verticalScale(54),
+    borderRadius: radius._15,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacingX._10,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: spacingY._40,
+  },
 });

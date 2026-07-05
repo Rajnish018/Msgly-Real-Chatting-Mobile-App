@@ -1,43 +1,42 @@
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
+import { getApp } from "@react-native-firebase/app";
+import {
+  AuthorizationStatus,
+  getMessaging,
+  getToken,
+  onTokenRefresh as subscribeToTokenRefresh,
+  requestPermission,
+  setBackgroundMessageHandler,
+} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 
+const getMessagingInstance = () => getMessaging(getApp());
+
+if (Platform.OS !== "web") {
+  setBackgroundMessageHandler(getMessagingInstance(), async (remoteMessage) => {
+    console.log("Background message received:", remoteMessage);
+  });
+}
+
 export async function registerForPushNotificationsAsync() {
+  if (Platform.OS === "web") {
+    console.log("Push notifications are skipped on web");
+    return null;
+  }
 
-    // 1. Check if the device is a physical device
-    if (!Device.isDevice) {
-        console.log("Must use physical device for Push Notifications");
-        return null;
-    }
+  const messaging = getMessagingInstance();
+  const authStatus = await requestPermission(messaging);
+  const enabled =
+    authStatus === AuthorizationStatus.AUTHORIZED ||
+    authStatus === AuthorizationStatus.PROVISIONAL;
 
-    // 2. Get existing permissions
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+  if (!enabled) {
+    console.log("Permission not granted for notifications");
+    return null;
+  }
 
-    // 3. Request permissions if not granted
-    if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-    
-    // 4. Check if permissions are granted
-    if (finalStatus !== "granted") {
-        console.log("Permission not granted for notifications");
-        return null;
-    }
+  return await getToken(messaging);
+}
 
-    // 5. Get the push token
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    const expoPushToken = tokenData.data;
-
-    // 6. Set the notification channel (important)
-    if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-            name: "default",
-            importance: Notifications.AndroidImportance.MAX,
-        });
-    }
-
-    // 7. Return the push token
-    return expoPushToken;
+export function onTokenRefresh(callback: (token: string) => void) {
+  return subscribeToTokenRefresh(getMessagingInstance(), callback);
 }

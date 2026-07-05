@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
 import { BackButtonProps } from '@/types'
 import { colors } from '@/constants/theme'
@@ -21,5 +21,11 @@ const BackButton=({
 export default BackButton
 
 const styles=StyleSheet.create({
+    button:{
+        padding:verticalScale(6),
+        borderRadius:verticalScale(6),
+        alignItems:"center",
+        justifyContent:"center"
+    }
 
 })

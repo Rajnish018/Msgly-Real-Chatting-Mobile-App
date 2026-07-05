@@ -1,270 +1,334 @@
-import { View, StyleSheet, Platform, ScrollView, TouchableOpacity, Alert } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { colors, spacingX, spacingY } from '@/constants/theme';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, StyleSheet, Platform, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as Icons from 'phosphor-react-native';
+import * as ImagePicker from 'expo-image-picker';
+
+import { radius, spacingX, spacingY } from '@/constants/theme';
 import { scale, verticalScale } from '@/utils/styling';
 import ScreenWrapper from '@/components/ScreenWrapper';
 import Header from '@/components/Header';
 import BackButton from '@/components/BackButton';
 import Avatar from '@/components/Avatar';
-import * as Icons from 'phosphor-react-native'
 import Typo from '@/components/Typo';
 import Input from '@/components/Input';
-import { UserProps } from '@/types';
-import { useAuth } from '@/context/authContext';
 import Button from '@/components/Button';
-import { useRouter } from 'expo-router';
-import { updateProfile } from '@/socket/socketEvents';
-import * as ImagePicker from 'expo-image-picker';
+
+import { useAuth } from '@/context/authContext';
+import { useAppSettings } from '@/context/appSettingsContext';
+import { useTheme } from '@/context/themeContext';
+import { updateProfile, updateProfileResponse } from '@/socket/socketEvents';
 import { uploadFileToCloudinary } from '@/services/imageService';
+import { UserProps } from '@/types';
 
-
-
-const ProfileModal=()=> {
-  const{user,signOut,updateToken}=useAuth()
-  const[loading,setLoading]=useState(false)
-  const router =useRouter();
-
-  const[userData,setUserData]=useState<UserProps>({
-    name:"",
-    email:"",
-    avatar:null as string |null
-  })
-useEffect(() => {
-  updateProfile(processUpdateProfile);
-  return()=>{
-    updateProfile(processUpdateProfile,true)
-  }
-}, []);
-
-const processUpdateProfile=(res:any)=>{
-  console.log('got res :',res)
-  setLoading(false)
-  if(res.success){
-    updateToken(res.data.token)
-    router.back()
-
-  }else{
-    Alert.alert("User",res.msg)
-  }
+interface ThemeColors {
+  background?: string;
+  white: string;
+  black: string;
+  text: string;
+  primary: string;
+  neutral100: string;
+  neutral400: string;
+  neutral500: string;
+  [key: string]: string | undefined; 
 }
 
- useEffect(() => {
-  setUserData({
-    name: user?.name || "",
-    email: user?.email || "",
-    avatar: user?.avatar || null,
+const ProfileModal = () => {
+  const { user, updateToken } = useAuth();
+  const { colors } = useTheme();
+  const { t } = useAppSettings();
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState<UserProps>({
+    name: "",
+    email: "",
+    avatar: null,
+    bio: "" 
   });
-}, [user]);
 
-const handleLogout=async()=>{
-  router.back()
-  await signOut()
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-}
-
-const onSumbit=async ()=>{
-  let{name,avatar}=userData;
-  if(!name.trim()){
-    Alert.alert("User","please update your name")
-    return;
-  }
-
-  let data={
-    name,
-    avatar,
-  }
-
-
-  if(avatar&& typeof avatar?.uri){
-    setLoading(true)
-    const res=await uploadFileToCloudinary(avatar,"profiles")
-    if(res.success){
-      data.avatar=res.data
-    }else{
-      Alert.alert("User",res.msg)
-      setLoading(false)
-      return;
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        name: user.name || "",
+        email: user.email || "",
+        avatar: user.avatar || null,
+        bio: user.bio || ""
+      });
     }
-  }
-  
-  updateProfile(data)
- 
-}
-const showLogoutAlert=()=>{
-  Alert.alert("Confirm","Are you sure you want to logout?",[
-    {
-      text:"Cancel",
-      onPress:()=>console.log("Cancel Logout"),
-      style:'cancel'
-    },
-    {
-      text:"Logout",
-      onPress:()=>handleLogout(),
-      style:"destructive"
-    }
-  ])
+  }, [user]);
 
-}
-const onPickImage=async()=>{
-  let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 
-        // 'videos'
-      ],
-      // allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+  useEffect(() => {
+    const handleResponse = (res: any) => {
+      setLoading(false);
+      if (res.success) {
+        if (res.data?.token) updateToken(res.data.token);
+        if (res.changed) {
+          router.back();
+        }
+      } else {
+        Alert.alert(t("updateFailed"), res.msg || t("somethingWentWrong"));
+      }
+    };
+
+    updateProfileResponse(handleResponse);
+    
+    return () => {
+      setLoading(false);
+      updateProfileResponse(handleResponse, true);
+    };
+  }, [t, updateToken, router]);
+
+  const onPickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.6,
     });
 
-    console.log(result);
-
     if (!result.canceled) {
-      setUserData({...userData, avatar:result.assets[0]});
+      setUserData(prev => ({ ...prev, avatar: result.assets[0] as any }));
     }
   };
 
+  const onSave = async () => {
+    const { name, avatar, bio } = userData;
+    const currentName = user?.name || "";
+    const currentAvatar = user?.avatar || "";
+    const currentBio = user?.bio || "";
+
+    if (!name.trim()) {
+      Alert.alert(t("required"), t("provideName"));
+      return;
+    }
+
+    setLoading(true);
+    const updateData: any = { name, bio };
+
+    try {
+      if (avatar && typeof avatar === 'object' && (avatar as any).uri) {
+        const res = await uploadFileToCloudinary(avatar, "profiles");
+        if (res.success) {
+          updateData.avatar = res.data;
+        } else {
+          Alert.alert(t("uploadFailed"), t("uploadProfilePictureFailed"));
+          setLoading(false);
+          return;
+        }
+      } else {
+        updateData.avatar = avatar; 
+      }
+
+      const normalizedName = (updateData.name || "").trim();
+      const normalizedAvatar = (updateData.avatar || "").trim();
+      const normalizedBio = (updateData.bio || "").trim();
+
+      if (
+        normalizedName === currentName.trim() &&
+        normalizedAvatar === currentAvatar.trim() &&
+        normalizedBio === currentBio.trim()
+      ) {
+        Alert.alert(t("info"), t("noChanges") || "No changes made");
+        setLoading(false);
+        return;
+      }
+
+      updateProfile(updateData);
+    } catch (error: any) {
+      Alert.alert(t("error"), error.message || t("somethingWentWrong"));
+      setLoading(false);
+    }
+  };
+
+  const avatarUri = useMemo(() => {
+    return typeof userData.avatar === 'string' 
+      ? userData.avatar 
+      : (userData.avatar as any)?.uri;
+  }, [userData.avatar]);
 
   return (
-
-    <ScreenWrapper isModal={true} >
+    <ScreenWrapper isModal={true}>
       <View style={styles.container}>
-        <Header title={"Update Profile"} leftIcon={Platform.OS==='android' &&
-          <BackButton color={colors.black}/>
-          
-        }
-        style={{marginVertical:spacingY._15}}
+        <Header
+          title={t("editProfile")}
+          leftIcon={<BackButton color={colors.text || colors.black} />}
+          style={styles.header}
         />
-        {/* form */}
-        <ScrollView contentContainerStyle={styles.form}>
-          <View style={styles.avatarContainer}>
-          <Avatar uri ={userData.avatar} size={170}/>
-          <TouchableOpacity style={styles.editIcon} onPress={onPickImage}>
-            <Icons.PencilIcon size={verticalScale(20)}
-            color={colors.neutral800}/>
-          </TouchableOpacity>
-          </View>
-          <View style={{gap:spacingY._20}}>
-            <View style={styles.inputContainer}>
-              <Typo style={{paddingLeft:spacingX._10}}>Email</Typo>
 
-              <Input value={userData.email}
-              containerStyle={{
-                borderColor:colors.neutral350,
-                paddingLeft:spacingX._20,
-                backgroundColor:colors.neutral300
-              }}
-            onChangeText={value=>setUserData({...userData,email:value})}
-               editable={false}/>
-
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* AVATAR PICKER */}
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarOuterRing}>
+              <View style={styles.avatarContainer}>
+                <Avatar
+                  uri={avatarUri}
+                  size={scale(110)}
+                  rounded={radius._30}
+                />
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.editIcon}
+                  onPress={onPickImage}
+                >
+                  <Icons.Camera size={scale(18)} weight="bold" color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
             </View>
-
+            <Typo size={14} fontWeight="500" color={colors.primary} style={styles.avatarText}>
+              {t("changeProfilePhoto")}
+            </Typo>
           </View>
-          <View style={{gap:spacingY._20}}>
-            <View style={styles.inputContainer}>
-              <Typo style={{paddingLeft:spacingX._10}}>Name</Typo>
 
-              <Input value={userData.name}
-              containerStyle={{
-                borderColor:colors.neutral350,
-                paddingLeft:spacingX._20,
-                // backgroundColor:colors.neutral300
-              }}
-            onChangeText={value=>setUserData({...userData,name:value})}
-              //  editable={false}
+          {/* FORM CARD */}
+          <View style={styles.formCard}>
+            <View style={styles.inputGroup}>
+              <Typo size={13} fontWeight="600" color={colors.neutral500}>{t("fullName")}</Typo>
+              <Input
+                placeholder="John Doe"
+                value={userData.name}
+                onChangeText={value => setUserData(prev => ({ ...prev, name: value }))}
+                icon={<Icons.User size={20} color={colors.neutral400} weight="regular" />}
               />
-
             </View>
 
+            <View style={styles.inputGroup}>
+              <Typo size={13} fontWeight="600" color={colors.neutral500}>{t("emailAddress")}</Typo>
+              <Input
+                value={userData.email}
+                editable={false}
+                containerStyle={styles.disabledInput}
+                inputStyle={styles.disabledInputText}
+                icon={<Icons.EnvelopeSimple size={20} color={colors.neutral400} weight="regular" />}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Typo size={13} fontWeight="600" color={colors.neutral500}>{t("bio")}</Typo>
+              <Input
+                placeholder={t("tellUsAboutYourself")}
+                value={userData.bio}
+                multiline={true}
+                numberOfLines={4}
+                containerStyle={styles.bioInput} 
+                inputStyle={styles.bioTextInput}
+                onChangeText={value => setUserData(prev => ({ ...prev, bio: value }))}
+              />
+            </View>
           </View>
         </ScrollView>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <Button
+            onPress={onSave}
+            loading={loading}
+            style={styles.saveButton}
+          >
+            <Typo color="#FFFFFF" fontWeight="600" size={16}>
+              {t("updateProfile")}
+            </Typo>
+          </Button>
+        </View>
       </View>
-      <View style={styles.footer}>
-            {!loading&&(
-               <Button
-    style={{
-      backgroundColor: colors.rose,
-      height: verticalScale(56),
-      width: verticalScale(56),
-    }}
-    onPress={showLogoutAlert}
-  >
-    <Icons.SignOut
-      size={verticalScale(30)}
-      color={colors.white}
-      weight="bold"
-    />
-  </Button>
-            )}
-
-  <Button style={{ flex: 1 }} onPress= {onSumbit } loading={loading}>
-    <Typo color={colors.black} fontWeight={"700"}>
-      Update
-    </Typo>
-  </Button>
-</View>
-
     </ScreenWrapper>
-  )
-}
+  );
+};
 
 export default ProfileModal;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: spacingY._20,
-    // paddingVertical: spacingY._30,
-  },
-
-  footer: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingHorizontal: spacingX._20,
-
-    gap: scale(12),
-    paddingTop: spacingY._15,
-    borderTopColor: colors.neutral200,
-    marginBottom: spacingY._10,
-    borderTopWidth: 1,
-  },
-
-  form: {
-    gap: spacingY._30,
-    marginTop: spacingY._15,
-  },
-
-  avatarContainer: {
-    position: "relative",
-    alignSelf: "center",
-  },
-
-  avatar: {
-    alignSelf: "center",
-    backgroundColor: colors.neutral300,
-    height: verticalScale(135),
-    width: verticalScale(135),
-    borderRadius: 200,
-    borderWidth: 1,
-    borderColor: colors.neutral500,
-    // overflow: "hidden",
-    // position: "relative",
-  },
-  inputContainer:{
-
-  },
-
-  editIcon: {
-    position: "absolute",
-    bottom: spacingY._5,
-    right: spacingY._7,
-    borderRadius: 100,
-    backgroundColor: colors.neutral100,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-    padding: spacingY._7,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { 
+      flex: 1, 
+      backgroundColor: colors.background || colors.white,
+    },
+    header: {
+      paddingHorizontal: spacingX._20,
+      marginBottom: spacingY._10,
+    },
+    scrollContent: { 
+      paddingHorizontal: spacingX._20,
+      paddingBottom: spacingY._30, 
+    },
+    avatarWrapper: { 
+      alignItems: 'center', 
+      marginTop: spacingY._10,
+      marginBottom: spacingY._25,
+    },
+    avatarOuterRing: {
+      padding: scale(4),
+      borderRadius: radius._30 + 4,
+      borderWidth: 1,
+      borderColor: colors.neutral100,
+      borderStyle: 'dashed',
+    },
+    avatarContainer: { 
+      position: "relative",
+    },
+    editIcon: {
+      position: "absolute",
+      bottom: -scale(2),
+      right: -scale(2),
+      backgroundColor: colors.primary,
+      padding: scale(8),
+      borderRadius: radius._90 || 999,
+      borderWidth: 3,
+      borderColor: colors.background || colors.white,
+      shadowColor: colors.black,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    avatarText: {
+      marginTop: spacingY._12,
+      letterSpacing: 0.2,
+    },
+    formCard: { 
+      gap: spacingY._20,
+      backgroundColor: colors.white === colors.background ? '#FSF5F7' : 'transparent', // Light background tint if flat white layout
+    },
+    inputGroup: { 
+      gap: spacingY._7,
+    },
+    disabledInput: { 
+      backgroundColor: colors.neutral100, 
+      opacity: 0.8,
+      borderRadius: radius._12,
+      borderWidth: 1,
+      borderColor: colors.neutral100,
+    },
+    disabledInputText: {
+      color: colors.neutral500,
+    },
+    bioInput: {
+      minHeight: verticalScale(110),
+      borderRadius: radius._12,
+      alignItems: 'flex-start', 
+      paddingVertical: spacingY._12,
+      paddingHorizontal: spacingX._12,
+    },
+    bioTextInput: {
+      textAlignVertical: 'top', 
+      height: '100%',
+      paddingTop: Platform.OS === 'ios' ? 0 : 2, 
+    },
+    footer: {
+      paddingHorizontal: spacingX._20,
+      paddingTop: spacingY._17,
+      paddingBottom: Platform.OS === 'ios' ? spacingY._30 : spacingY._20,
+      borderTopWidth: 1,
+      borderTopColor: colors.neutral100,
+      backgroundColor: colors.background || colors.white,
+    },
+    saveButton: {
+      borderRadius: radius._12,
+      height: verticalScale(48),
+    }
+  });
