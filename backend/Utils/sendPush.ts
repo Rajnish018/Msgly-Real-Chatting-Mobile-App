@@ -6,6 +6,50 @@ import User from "../models/user.model.js";
 import type { PushNotificationParams } from "../types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serviceAccountFileName = "msgly-chatting-app-firebase-adminsdk-fbsvc-545e99854e.json";
+
+const parseServiceAccountJson = (value: string) => {
+  const normalizedValue = value.trim();
+  const jsonString = normalizedValue.startsWith("{")
+    ? normalizedValue
+    : Buffer.from(normalizedValue, "base64").toString("utf8");
+
+  return JSON.parse(jsonString);
+};
+
+const loadFirebaseServiceAccount = () => {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    console.log("Firebase service account loaded from FIREBASE_SERVICE_ACCOUNT_JSON.");
+    return parseServiceAccountJson(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  }
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+    console.log("Firebase service account loaded from FIREBASE_SERVICE_ACCOUNT_BASE64.");
+    return parseServiceAccountJson(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64);
+  }
+
+  const serviceAccountCandidates = [
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+    path.resolve(process.cwd(), serviceAccountFileName),
+    path.resolve(process.cwd(), "backend", serviceAccountFileName),
+    path.resolve(__dirname, "../", serviceAccountFileName),
+    path.resolve(__dirname, "../../", serviceAccountFileName),
+  ].filter(Boolean) as string[];
+
+  for (const candidate of serviceAccountCandidates) {
+    const resolvedPath = path.resolve(candidate);
+    const exists = fs.existsSync(resolvedPath);
+    console.log(`Firebase service account path check: ${resolvedPath} | Exists: ${exists}`);
+
+    if (exists) {
+      return JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
+    }
+  }
+
+  throw new Error(
+    "Firebase credentials missing. Set FIREBASE_SERVICE_ACCOUNT_JSON, FIREBASE_SERVICE_ACCOUNT_BASE64, or FIREBASE_SERVICE_ACCOUNT_PATH."
+  );
+};
 
 /**
  * Ensures Firebase is initialized once.
@@ -14,28 +58,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export async function initializeFirebase() {
   if (admin.apps.length > 0) return;
 
-  console.log("--- DEBUG: Starting Firebase Initialization ---");
-  
   try {
-    const serviceAccountCandidates = [
-      path.resolve(__dirname, "../msgly-chatting-app-firebase-adminsdk-fbsvc-545e99854e.json"),
-      path.resolve(__dirname, "../../msgly-chatting-app-firebase-adminsdk-fbsvc-545e99854e.json"),
-    ];
-
-    const serviceAccountPath = serviceAccountCandidates.find((candidate) => {
-      const exists = fs.existsSync(candidate);
-      console.log(`DEBUG: Path check: ${candidate} | Exists: ${exists}`);
-      return exists;
-    });
-
-    if (!serviceAccountPath) {
-      throw new Error("Firebase service account JSON not found in any candidate path.");
-    }
-
-    // Using dynamic import for JSON assertion
-    const { default: serviceAccount } = await import(serviceAccountPath, {
-      assert: { type: "json" },
-    });
+    const serviceAccount = loadFirebaseServiceAccount();
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
