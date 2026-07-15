@@ -65,15 +65,17 @@ const validateEnv = (): EnvironmentConfig => {
     mongoUri: mongoUri as string,
     jwtSecret: jwtSecret as string,
     allowedOrigins,
-    smtpHost: process.env.SMTP_HOST,
-    smtpPort: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
-    smtpUser: process.env.SMTP_USER,
-    smtpPass: process.env.SMTP_PASS,
-    mailFrom: process.env.MAIL_FROM,
     accountDeletionGraceDays: parseInt(process.env.ACCOUNT_DELETION_GRACE_DAYS || '30', 10),
-    firebaseServiceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
-    sentryDsn: process.env.SENTRY_DSN,
     logLevel: (process.env.LOG_LEVEL || 'info') as 'debug' | 'info' | 'warn' | 'error',
+    ...(process.env.SMTP_HOST && { smtpHost: process.env.SMTP_HOST }),
+    ...(process.env.SMTP_PORT && { smtpPort: parseInt(process.env.SMTP_PORT, 10) }),
+    ...(process.env.SMTP_USER && { smtpUser: process.env.SMTP_USER }),
+    ...(process.env.SMTP_PASS && { smtpPass: process.env.SMTP_PASS }),
+    ...(process.env.MAIL_FROM && { mailFrom: process.env.MAIL_FROM }),
+    ...(process.env.FIREBASE_SERVICE_ACCOUNT_PATH && {
+      firebaseServiceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+    }),
+    ...(process.env.SENTRY_DSN && { sentryDsn: process.env.SENTRY_DSN }),
   };
 
   console.log('✅ Environment validation passed');

@@ -57,7 +57,7 @@ class Logger {
       ...(error && {
         error: {
           message: error.message,
-          stack: error.stack,
+          ...(error.stack && { stack: error.stack }),
         },
       }),
     };

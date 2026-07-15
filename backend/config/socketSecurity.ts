@@ -1,6 +1,6 @@
 // Socket.io Security Configuration - Add to backend/config/socketSecurity.ts
-import { config } from './environment';
-import { logger } from '../Utils/logger';
+import { config } from './environment.js';
+import { logger } from '../Utils/logger.js';
 
 export const getSocketIOConfig = () => {
   return {

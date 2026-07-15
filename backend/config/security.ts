@@ -1,10 +1,11 @@
 // Backend security configuration - Add to backend/config/security.ts
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cors from 'cors';
-import { config } from './environment';
-import { logger } from '../Utils/logger';
+import { config } from './environment.js';
+import { logger } from '../Utils/logger.js';
 
 // Security headers with Helmet
 export const securityHeaders = helmet({
